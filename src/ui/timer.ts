@@ -1,6 +1,9 @@
 import * as ex from "excalibur";
 
 export class Timer extends ex.Label {
+  time = 10000;
+  timerRunning = true;
+
   timerBackground = new ex.Rectangle({
     width: 140,
     height: 10,
@@ -37,16 +40,23 @@ export class Timer extends ex.Label {
       ],
     });
     this.graphics.use(group);
-    this.timerStart = new Date(new Date().getTime() + 60000);
+    this.timerStart = new Date(new Date().getTime() + this.time);
+    engine.on("pauseTimer", () => {
+      this.timerRunning = false;
+    });
   }
 
   onPostUpdate(engine: ex.Engine, elapsed: number): void {
+    if (!this.timerRunning) {
+      return;
+    }
     const now = new Date();
     const remaining = Math.round(
       (this.timerStart.getTime() - now.getTime()) / 1000,
     );
     if (remaining <= 0) {
-      this.timerStart = new Date(new Date().getTime() + 60000);
+      this.timerStart = new Date(new Date().getTime() + this.time);
+      engine.emit("timerUp");
     }
 
     this.timerText.text = `${remaining}`;
