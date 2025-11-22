@@ -1,14 +1,13 @@
-import * as ex from 'excalibur';
+import * as ex from "excalibur";
 
-import { Timer } from './timer';
-import { Engine } from '../train/engine';
-import { Player } from '../people/player';
+import { Timer } from "./timer";
+import { Engine } from "../train/engine";
+import { Player } from "../people/player";
 
 export class UI extends ex.Scene {
-  timer = new Timer
+  timer = new Timer();
 
   onInitialize(engine: ex.Engine): void {
-
     const eng = new Engine();
     this.add(eng);
 
@@ -18,6 +17,4 @@ export class UI extends ex.Scene {
     player.addChild(new Timer());
     this.camera.strategy.lockToActor(player);
   }
-
 }
-
