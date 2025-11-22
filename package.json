@@ -1,0 +1,30 @@
+{
+  "name": "somnium",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/MacMcIrish/Somnium#readme",
+  "bugs": {
+    "url": "https://github.com/MacMcIrish/Somnium/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MacMcIrish/Somnium.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "7.2.4"
+  },
+  "dependencies": {
+    "excalibur": "0.31.0"
+  }
+}
