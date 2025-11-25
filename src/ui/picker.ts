@@ -1,4 +1,5 @@
 import * as ex from "excalibur";
+import { TimerStart } from "./timer";
 
 export class UpgradePicker extends ex.Actor {
   constructor() {
@@ -10,9 +11,12 @@ export class UpgradePicker extends ex.Actor {
     });
   }
 
-  onInitialize(engine: ex.Engine): void {
-    // show the upgrade types?
+  upgrade(engine: ex.Engine) {
+    engine.emit("unpause");
+    this.kill();
+  }
 
+  onInitialize(engine: ex.Engine): void {
     const trainUpgrade = new ex.Actor({
       width: 100,
       height: 200,
@@ -21,7 +25,7 @@ export class UpgradePicker extends ex.Actor {
     });
     this.addChild(trainUpgrade);
     trainUpgrade.on("pointerup", () => {
-      console.log("train upgrade");
+      this.upgrade(engine);
     });
     const roomUpgrade = new ex.Actor({
       width: 100,
@@ -32,7 +36,7 @@ export class UpgradePicker extends ex.Actor {
 
     this.addChild(roomUpgrade);
     roomUpgrade.on("pointerup", () => {
-      console.log("room upgrade");
+      this.upgrade(engine);
     });
 
     const playerUpgrade = new ex.Actor({
@@ -43,7 +47,9 @@ export class UpgradePicker extends ex.Actor {
     });
     this.addChild(playerUpgrade);
     playerUpgrade.on("pointerup", () => {
-      console.log("player upgrade");
+      engine.emit(TimerStart);
+      engine.emit("playerUpgrade", "speed");
+      this.upgrade(engine);
     });
   }
 }

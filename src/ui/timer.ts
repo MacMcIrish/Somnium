@@ -1,8 +1,11 @@
 import * as ex from "excalibur";
 
+export const TimerStart = "timer_start";
+export const TimerRestart = "timer_stop";
+
 export class Timer extends ex.Label {
   time = 10000;
-  timerRunning = true;
+  isPaused = true;
 
   timerBackground = new ex.Rectangle({
     width: 140,
@@ -41,22 +44,26 @@ export class Timer extends ex.Label {
     });
     this.graphics.use(group);
     this.timerStart = new Date(new Date().getTime() + this.time);
-    engine.on("pauseTimer", () => {
-      this.timerRunning = false;
+    engine.on(TimerStart, () => {
+      this.isPaused = false;
+      this.timerStart = new Date(new Date().getTime() + this.time);
     });
   }
 
   onPostUpdate(engine: ex.Engine, elapsed: number): void {
-    if (!this.timerRunning) {
+    if (this.isPaused) {
       return;
     }
+
     const now = new Date();
     const remaining = Math.round(
       (this.timerStart.getTime() - now.getTime()) / 1000,
     );
     if (remaining <= 0) {
       this.timerStart = new Date(new Date().getTime() + this.time);
+      engine.emit("pause");
       engine.emit("timerUp");
+      this.isPaused = true;
     }
 
     this.timerText.text = `${remaining}`;
