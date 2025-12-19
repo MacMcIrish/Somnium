@@ -7,15 +7,20 @@ import {
   vec,
   Rectangle,
   Text,
+  SpriteSheet,
+  Animation,
+  AnimationStrategy,
 } from "excalibur";
 import { names } from "./names";
 import { Train } from "../train/train";
 import { Car, Needs } from "../train/car";
+import { LogMessageEvent } from "../ui/log";
+import { Resources } from "../ui/resources";
 
 const moveSpeed = 100;
 
 export class Passenger extends Actor {
-  name: string;
+  passengerName: string;
   train: Train;
   happiness: number;
   happinessLabel: Rectangle;
@@ -34,6 +39,7 @@ export class Passenger extends Actor {
   state: string;
   carHistory: Car[];
   currentCar: Car;
+  hasReservedCurrentCar: boolean;
 
   gameTickFn: () => void;
 
@@ -86,7 +92,10 @@ export class Passenger extends Actor {
     }
 
     if (this.happiness <= 0) {
-      console.log("this shit sucks im out");
+      engine.emit(
+        LogMessageEvent,
+        `${this.passengerName} wasn't having a good time and bailed`,
+      );
       this.kill();
       return;
     }
@@ -119,8 +128,18 @@ export class Passenger extends Actor {
 
         const f = this.currentCar.fulfill();
         if (gameTick) {
-          this.currentCar.isFull();
-          this.fulfill(f);
+          if (!this.hasReservedCurrentCar) {
+            this.hasReservedCurrentCar = this.currentCar.reserve();
+          }
+
+          if (this.hasReservedCurrentCar) {
+            this.fulfill(f);
+          } else if (this.timeInCurrentArea > 5) {
+            engine.emit(
+              LogMessageEvent,
+              `${this.passengerName} is getting impatient`,
+            );
+          }
         }
 
         // need to be sure not to leave a place where the passenger needs are being fulfilled
@@ -138,7 +157,7 @@ export class Passenger extends Actor {
 
         break;
       case "findingHunger":
-        console.log("i need hunger");
+        engine.emit(LogMessageEvent, `${this.passengerName} is hungry`);
         const hungerCars = this.train.cars
           .filter((c) => c.fulfill().hunger > 0)
           .map((c) => ({ car: c, penalty: this.pos.distance(c.pos) }))
@@ -153,7 +172,10 @@ export class Passenger extends Actor {
 
         break;
       case "findingRecreation":
-        console.log("i need rec");
+        engine.emit(
+          LogMessageEvent,
+          `${this.passengerName} needs some recreation`,
+        );
         const recreationCars = this.train.cars
           .filter((c) => c.fulfill().recreation > 0)
           .map((c) => ({ car: c, penalty: this.pos.distance(c.pos) }))
@@ -176,7 +198,7 @@ export class Passenger extends Actor {
     this.hunger = 100;
     this.timeInCurrentArea = 0;
     this.carHistory = [];
-    this.name = names[Math.floor(Math.random() * names.length)];
+    this.passengerName = names[Math.floor(Math.random() * names.length)];
     this.state = "findingRecreation";
     engine.on("pause", () => {
       this.isPaused = true;
@@ -194,6 +216,10 @@ export class Passenger extends Actor {
             (c) => c !== this.currentCar,
           );
           this.carHistory.unshift(this.currentCar);
+          engine.emit(
+            LogMessageEvent,
+            `${this.passengerName} arrived at the ${this.currentCar.carName()}`,
+          );
         }
       }
     });
@@ -228,25 +254,40 @@ export class Passenger extends Actor {
 
     engine.on("gameTick", this.gameTickFn);
 
-    const passengerRectangle = new Rectangle({
-      width: 10,
-      height: 10,
-      color: Color.Brown,
-    });
     const passengerLabel = new Text({
-      text: this.name,
+      text: this.passengerName,
       color: Color.White,
     });
 
+    const spriteSheet = SpriteSheet.fromImageSource({
+      image: Resources.Passenger,
+      grid: {
+        rows: 2,
+        columns: 2,
+        spriteWidth: 128,
+        spriteHeight: 128,
+      },
+    });
+
+    const offsets = [0, 2];
+    const offset = offsets[Math.floor(Math.random() * offsets.length)];
+
+    const passengerDownAnimation = Animation.fromSpriteSheet(
+      spriteSheet,
+      [0 + offset],
+      150,
+      AnimationStrategy.Freeze,
+    );
+    passengerDownAnimation.scale = vec(0.25, 0.25);
     const group = new GraphicsGroup({
       members: [
         {
-          graphic: passengerRectangle,
+          graphic: passengerDownAnimation,
           offset: vec(0, 0),
         },
         {
           graphic: passengerLabel,
-          offset: vec(0, 10),
+          offset: vec(0, 30),
         },
         {
           graphic: this.hungerLabel,
@@ -262,6 +303,7 @@ export class Passenger extends Actor {
         },
       ],
     });
+
     this.graphics.use(group);
     // on timer pause, character should pause too
   }

@@ -1,9 +1,9 @@
 import * as ex from "excalibur";
 
 import { UI } from "./ui/ui";
-
+import { Resources } from "./ui/resources";
 const game = new ex.Engine({
-  width: 450,
+  width: 800,
   height: 500,
   backgroundColor: ex.Color.fromHex("#222222"),
   pixelArt: true,
@@ -12,6 +12,8 @@ const game = new ex.Engine({
   scenes: { Level: UI },
 });
 
-game.start().then(() => {
+const loader = new ex.Loader(Object.values(Resources));
+
+game.start(loader).then(() => {
   game.goToScene("Level");
 });

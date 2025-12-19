@@ -3,13 +3,17 @@ import * as ex from "excalibur";
 export const TimerStart = "timer_start";
 export const TimerRestart = "timer_stop";
 
+type TimerFunction = (engine: ex.Engine) => void;
+
 export class Timer extends ex.Label {
-  time = 10000;
-  isPaused = true;
+  prefix: string;
+  time: number;
+  callback: TimerFunction;
+  isPaused = false;
 
   timerBackground = new ex.Rectangle({
     width: 140,
-    height: 10,
+    height: 12,
     color: ex.Color.White,
   });
 
@@ -19,15 +23,11 @@ export class Timer extends ex.Label {
 
   timerStart: Date;
 
-  constructor() {
-    super({
-      pos: ex.vec(0, 0),
-      x: 10,
-      y: 0,
-      z: 1,
-
-      color: ex.Color.Black,
-    });
+  constructor(text: string, callback: TimerFunction, time: number) {
+    super();
+    this.prefix = text;
+    this.callback = callback;
+    this.time = time;
   }
 
   onInitialize(engine: ex.Engine): void {
@@ -44,6 +44,9 @@ export class Timer extends ex.Label {
     });
     this.graphics.use(group);
     this.timerStart = new Date(new Date().getTime() + this.time);
+    engine.on("pause", () => {
+      this.isPaused = true;
+    });
     engine.on(TimerStart, () => {
       this.isPaused = false;
       this.timerStart = new Date(new Date().getTime() + this.time);
@@ -60,12 +63,17 @@ export class Timer extends ex.Label {
       (this.timerStart.getTime() - now.getTime()) / 1000,
     );
     if (remaining <= 0) {
+      // reset the timer
       this.timerStart = new Date(new Date().getTime() + this.time);
+
+      this.callback(engine);
+      /*
       engine.emit("pause");
       engine.emit("timerUp");
       this.isPaused = true;
+       */
     }
 
-    this.timerText.text = `${remaining}`;
+    this.timerText.text = `${this.prefix} - ${remaining}`;
   }
 }

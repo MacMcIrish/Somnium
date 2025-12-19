@@ -4,10 +4,9 @@ import { Timer } from "./timer";
 import { Train } from "../train/train";
 import { Player } from "../people/player";
 import { UpgradePicker } from "./picker";
+import { Log } from "./log";
 
 export class UI extends ex.Scene {
-  timer = new Timer();
-
   onInitialize(engine: ex.Engine): void {
     const train = new Train();
     this.add(train);
@@ -15,7 +14,26 @@ export class UI extends ex.Scene {
     const player = new Player();
     this.add(player);
 
-    player.addChild(new Timer());
+    const upgradeTimer = new Timer(
+      "Time to upgrade",
+      (engine) => {
+        engine.emit("upgrade");
+        engine.emit("pause");
+      },
+      60000,
+    );
+    upgradeTimer.pos = ex.vec(0, 10);
+    player.addChild(upgradeTimer);
+    player.addChild(
+      new Timer(
+        "Time to children",
+        (engine) => {
+          engine.emit("addChildren");
+        },
+        30000,
+      ),
+    );
+    player.addChild(new Log());
 
     engine.on("timerUp", () => {
       player.addChild(new UpgradePicker());

@@ -1,20 +1,61 @@
-import { Color, Engine, Rectangle, vec } from "excalibur";
+import {
+  Animation,
+  AnimationStrategy,
+  Engine,
+  SpriteSheet,
+  GraphicsGroup,
+  vec,
+  Rectangle,
+  Color,
+} from "excalibur";
 import { Car, Needs } from "./car";
+import { Resources } from "../ui/resources";
 
 export class DiningCar extends Car {
-  tables: number;
-
   constructor() {
     super({
-      height: 140,
-      width: 80,
-      color: Color.Yellow,
-      pos: vec(0, 150),
+      width: 256,
+      height: 256,
     });
   }
 
   onInitialize(engine: Engine): void {
-    this.attachListener(engine);
+    super.onInitialize(engine);
+
+    const spriteSheet = SpriteSheet.fromImageSource({
+      image: Resources.DiningCar,
+      grid: {
+        rows: 1,
+        columns: 1,
+        spriteHeight: 256,
+        spriteWidth: 256,
+      },
+    });
+
+    const diningCarAnimation = Animation.fromSpriteSheet(
+      spriteSheet,
+      [0],
+      150,
+      AnimationStrategy.Freeze,
+    );
+
+    const diningCarBoundingBox = new Rectangle({
+      opacity: 0.5,
+      height: this.height,
+      width: this.width,
+      color: Color.Red,
+    });
+
+    const group = new GraphicsGroup({
+      members: [
+        {
+          graphic: diningCarAnimation,
+          offset: vec(0, 0),
+        },
+      ],
+    });
+
+    this.graphics.use(group);
   }
 
   fulfill(): Needs {
@@ -22,5 +63,13 @@ export class DiningCar extends Car {
       hunger: 10,
       recreation: 0,
     };
+  }
+
+  carName(): string {
+    return "Dining Car";
+  }
+
+  upgrade() {
+    super.upgrade();
   }
 }
